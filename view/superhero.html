@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+  <!-- Bootstrap v5.2 -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-rbsA2VBKQhggwzxH7pPCaAqO46MgnOM80zW1RWuH61DGLwZJEdK2Kadq2F9CUG65" crossorigin="anonymous">
+</head>
+<body>
+  <div class="container">
+    <!-- Formulario filtro -->
+    <div class="row mt-3 md-3">
+      <div class="col-md-12">
+        <div class="card">
+          <div class="card-header bg-warning">
+            <h1>Filtra tus super héroes</h1>
+          </div>
+          <div class="card-body">
+            <div class="input-group mt-3">
+              <span class="input-group-text">Raza:</span> 
+              <select name="race" id="race" class="form-select">
+                <option value="">Seleccione</option>
+              </select>
+              <span class="input-group-text">Género:</span> 
+              <select name="gender" id="gender" class="form-select">
+                <option value="">Seleccione</option>
+              </select>
+              <span class="input-group-text">Bando:</span> 
+              <select name="alignment" id="alignment" class="form-select">
+                <option value="">Seleccione</option>
+              </select>
+              <button id="exportar" class="btn btn-success btn-sm" type="button">Exportar PDF</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  
+    <!-- Tabla -->
+    <div class="row mt-3">
+      <div class="col-md-12">
+        <table id="table-superhero" class="table table-sm table-striped table-hover">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Nombre</th>
+              <th>Color de cabello</th>
+              <th>Editor</th>
+              <th>Peso kg.</th>
+            </tr>
+          </thead>
+          <tbody>
+            <!-- Asincrono -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+  
+  </div>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", ()=>{
+      const exportarPDF = document.querySelector("#exportar");
+      const lisRace = document.querySelector("#race");
+      const lisGender = document.querySelector("#gender");
+      const lisAlignment = document.querySelector("#alignment");
+      const cuerpoTabla = document.querySelector("tbody");
+
+      function obtenerRace(){
+          const parametros = new URLSearchParams();
+          parametros.append("operacion", "listar");
+
+          fetch("../controller/race.controller.php",{
+            method: 'POST',
+            body: parametros
+          })
+            .then(response => response.json())
+            .then(datos =>{
+              lisRace.innerHTML="<option value=''>Seleccione</option>"                                
+              datos.forEach(element => {
+                const opcion = document.createElement("option");
+                opcion.value = element.id;
+                opcion.text = element.race;
+                lisRace.appendChild(opcion);
+              });
+            });
+        }
+
+        function obtenerGender(){
+          const parametros = new URLSearchParams();
+          parametros.append("operacion", "listar");
+
+          fetch("../controller/gender.controller.php",{
+            method: 'POST',
+            body: parametros
+          })
+            .then(response => response.json())
+            .then(datos =>{
+              lisGender.innerHTML="<option value=''>Seleccione</option>"                                
+              datos.forEach(element => {
+                const opcion = document.createElement("option");
+                opcion.value = element.id;
+                opcion.text = element.gender;
+                lisGender.appendChild(opcion);
+              });
+            });
+        }
+
+        function obtenerAlignment(){
+          const parametros = new URLSearchParams();
+          parametros.append("operacion", "listar");
+
+          fetch("../controller/alignment.controller.php",{
+            method: 'POST',
+            body: parametros
+          })
+            .then(response => response.json())
+            .then(datos =>{
+              lisAlignment.innerHTML="<option value=''>Seleccione</option>"                                
+              datos.forEach(element => {
+                const opcion = document.createElement("option");
+                opcion.value = element.id;
+                opcion.text = element.alignment;
+                lisAlignment.appendChild(opcion);
+              });
+            });
+        }
+
+        function obtenerDatos(){
+          const parametros = new URLSearchParams();
+          parametros.append("operacion", "buscar");
+          parametros.append("race_id", parseInt(lisRace.value));
+          parametros.append("gender_id", parseInt(lisGender.value));
+          parametros.append("alignment_id", parseInt(lisAlignment.value));
+
+          fetch("../controller/superhero.controller.php",{
+            method: 'POST',
+            body: parametros
+          })
+            .then(response => response.json())
+            .then(datos =>{
+              cuerpoTabla.innerHTML = ``;                             
+              datos.forEach(element => {
+                const fila= `
+                <tr>
+                    <td>${element.id}</td>
+                    <td>${element.superhero_name}</td>
+                    <td>${element.hair_colour}</td>
+                    <td>${element.publisher_name}</td>
+                    <td>${element.weight_kg}</td>
+                </tr>
+                `;
+                cuerpoTabla.innerHTML += fila;
+              });
+            });
+        }
+
+        function generarPDF(){
+          const parametros = new URLSearchParams();
+            parametros.append("race_id", parseInt(lisRace.value));
+            parametros.append("gender_id", parseInt(lisGender.value));
+            parametros.append("alignment_id", parseInt(lisAlignment.value));
+            parametros.append("titulo",lisRace.options[lisRace.selectedIndex].text + " - " + 
+              lisGender.options[lisGender.selectedIndex].text + " - " +
+              lisAlignment.options[lisAlignment.selectedIndex].text);
+            window.open(`../reports/reporte1.php?${parametros}`, `_blank`);
+        }
+
+        lisAlignment.addEventListener("change",obtenerDatos);
+        exportarPDF.addEventListener("click",generarPDF);
+
+
+        obtenerRace();
+        obtenerGender();
+        obtenerAlignment();
+
+    });
+  </script>
+</body>
+</html>
